@@ -1,16 +1,19 @@
 use std;
 use game_model;
 
-pub fn get_char_from_user() -> Option<char> {
+pub fn get_input_from_user() -> Result<String, String> {
     let mut buffer = String::new();
+
     let result: std::io::Result<usize> = std::io::stdin().read_line(&mut buffer);
 
-    // TODO give feedback, have input requirements
-
     match result {
-        Ok(_) => buffer.chars().nth(0),
-        Err(_) => None
+        Ok(_) => Ok(buffer),
+        Err(_) => Err("Failed to get input".to_string())
     }
+}
+
+pub fn display_error(err: String) {
+    println!("Error: {}", err);
 }
 
 pub fn display_start_hint(word_length: usize) {

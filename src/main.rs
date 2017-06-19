@@ -18,7 +18,7 @@ fn main() {
 
     match result {
         Ok(words) => word = rand::thread_rng().choose(&words).unwrap().to_owned(),
-        Err(e) => println!("{}", e)
+        Err(e) => game_view::display_error(e)
     }
 
     let mut g = game_model::GameModel::new(word);
