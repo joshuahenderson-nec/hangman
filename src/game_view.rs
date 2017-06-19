@@ -5,7 +5,7 @@ pub fn get_char_from_user() -> Option<char> {
     let mut buffer = String::new();
     let result: std::io::Result<usize> = std::io::stdin().read_line(&mut buffer);
 
-    // give feedback, have requirements
+    // TODO give feedback, have input requirements
 
     match result {
         Ok(_) => buffer.chars().nth(0),

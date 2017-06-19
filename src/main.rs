@@ -1,3 +1,5 @@
+extern crate rand;
+
 mod game_model;
 mod game_view;
 mod game_controller;
@@ -6,98 +8,58 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
+use rand::Rng;
+
+const DEFAULT_WORDS_FILENAME: &str = "words.txt";
 
 fn main() {
-    let mut g = game_model::GameModel::new("hello".to_string()); // load word from file
+    let mut word = "hello".to_string();
+    let result = get_words(DEFAULT_WORDS_FILENAME);
+
+    match result {
+        Ok(words) => word = rand::thread_rng().choose(&words).unwrap().to_owned(),
+        Err(e) => println!("{}", e)
+    }
+
+    let mut g = game_model::GameModel::new(word);
 
     game_controller::play(&mut g);
-
-    /*
-    let words = get_words();
-
-    for word in words {
-        println!("word = {}", word);
-    }
-    */
 }
 
-/*
-fn get_words() -> Vec<String> {
-    let mut result: Vec<String> = Vec::new();
-    let path = Path::new("words.txt");
+fn get_words(file_name: &str) -> Result<Vec<String>, String> {
+    let path = Path::new(file_name);
     let display = path.display();
 
-    let mut file = match File::open(&path) {
-        Err(why) => panic!("couldn't open {}: {}", display, why.description()),
-        Ok(file) => file
-    };
+    let result = File::open(&path);
 
-    let mut s = String::new();
-    match file.read_to_string(&mut s) {
-        Err(why) => panic!("couldn't read {}: {}", display, why.description()),
-        Ok(_) => {
-            result = s.split('\n').map(|x| x.to_string()).collect();
-
-            match result.last() {
-                Some(x) => {
-                    if x.len() == 0 {
-                        result.pop();
-                    }
-                }
-                None => ()
+    match result {
+        Ok(mut file) => {
+            let mut s = String::new();
+            match file.read_to_string(&mut s) {
+                Err(why) => Err(format!("Couldn't read {}: {}", display, why.description())),
+                Ok(_) => Ok(s.lines().map(|x| x.to_string()).collect())
             }
         }
+        Err(why) => Err(format!("Couldn't open {}: {}", display, why.description()))
     }
-
-    result
 }
-*/
 
 #[cfg(test)]
 mod test {
-    use game_model;
+    use get_words;
+    use DEFAULT_WORDS_FILENAME;
 
     #[test]
-    fn test_model_correct_guess() {
-        let mut g = game_model::GameModel::new("ok".to_string());
-        let start_lives = g.num_lives_left();
+    fn test_open_words_file_success() {
+        let result = get_words(DEFAULT_WORDS_FILENAME);
 
-        assert!(g.take_guess('o') == true);
-
-        assert!(g.num_lives_left() == start_lives);
+        assert!(result.is_ok());
     }
 
     #[test]
-    fn test_model_incorrect_guess() {
-        let mut g = game_model::GameModel::new("ok".to_string());
-        let start_lives = g.num_lives_left();
+    fn test_open_words_file_failure() {
+        let result = get_words("afilethatdoesntexist.txt");
 
-        assert!(g.take_guess('z') == false);
-
-        assert!(g.num_lives_left() == (start_lives - 1));
-    }
-
-    #[test]
-    fn test_model_win() {
-        let mut g = game_model::GameModel::new("ok".to_string());
-
-        assert!(g.take_guess('o') == true);
-        assert!(g.take_guess('k') == true);
-
-        assert!(g.has_won() == true);
-        assert!(g.has_lost() == false);
-    }
-
-    #[test]
-    fn test_model_loss() {
-        let mut g = game_model::GameModel::new("ok".to_string());
-        let num_lives = g.num_lives_left();
-
-        for _ in 0..num_lives {
-            g.take_guess('z');
-        }
-
-        assert!(g.has_won() == false);
-        assert!(g.has_lost() == true);
+        assert!(result.is_err());
     }
 }
