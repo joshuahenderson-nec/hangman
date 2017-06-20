@@ -1,19 +1,5 @@
-use std;
-use game_model;
-
-pub fn get_input_from_user() -> Result<String, String> {
-    let mut buffer = String::new();
-
-    let result: std::io::Result<usize> = std::io::stdin().read_line(&mut buffer);
-
-    match result {
-        Ok(_) => Ok(buffer),
-        Err(_) => Err("Failed to get input".to_string())
-    }
-}
-
-pub fn display_error(err: String) {
-    println!("Error: {}", err);
+pub fn display_input_error() {
+    println!("Please enter a single letter");
 }
 
 pub fn display_start_hint(word_length: usize) {
@@ -36,9 +22,9 @@ pub fn display_game_lost(word: &String) {
     println!("You lost! The word was: {}", word)
 }
 
-pub fn display_word_guessed_progress(g: &game_model::GameModel) {
-    for c in g.random_word.chars() {
-        if g.guesses.contains(&c) {
+pub fn display_word_guessed_progress(word: &String, guesses: &Vec<char>) {
+    for c in word.chars() {
+        if guesses.contains(&c) {
             print!("{}", c);
         } else {
             print!("*");
