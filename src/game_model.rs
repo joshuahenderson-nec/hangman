@@ -25,14 +25,9 @@ impl GameModel {
     }
 
     pub fn num_lives_left(&self) -> u32 {
-        let count = self.guesses.iter().fold(0, |sum, &letter|
-            if self.random_word.find(letter).is_none() { sum + 1 } else { sum });
-
-        if count > DEFAULT_LIVES {
-            0
-        } else {
-            DEFAULT_LIVES - count
-        }
+        self.guesses.iter().fold(DEFAULT_LIVES, |sum, &letter|
+            if self.random_word.contains(letter) { sum } else { sum - 1 }
+        )
     }
 }
 

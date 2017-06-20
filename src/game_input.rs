@@ -3,67 +3,82 @@ use game_view::display_input_error;
 
 pub fn get_valid_user_input_blocking() -> char {
     loop {
-        let mut input = String::new();
-        let result: std::io::Result<usize> = std::io::stdin().read_line(&mut input);
+        let input = get_user_input();
 
-        match result {
-            Ok(_) => {
-                let validated_input = match validate_input(input) {
-                    Ok(letter) => letter,
-                    Err(_) => {
-                        display_input_error();
-                        continue
-                    }
-                };
+        if is_input_valid(&input) {
+            return extract_character(&input);
+        }
 
-                validated_input
-            }
-            Err(_) => {
-                display_input_error();
-                continue
-            }
-        };
+        display_input_error();
     }
 }
 
-fn validate_input(input: String) -> Result<char, ()> {
-    if input.len() != 2 { // 2 = letter + carrage return
-        return Err(());
+fn get_user_input() -> String {
+    let mut input = String::new();
+    let result = std::io::stdin().read_line(&mut input);
+
+    match result {
+        Ok(_) => input.trim().to_string(),
+        Err(_) => panic!("Failed to get input of any length")
+    }
+}
+
+fn extract_character(input: &String) -> char {
+    debug_assert!(input.len() >= 1);
+
+    // Return the first character the user typed
+    input.chars().nth(0).unwrap()
+}
+
+fn is_input_valid(input: &String) -> bool {
+    if input.len() != 1 {
+        return false;
     }
 
-    // Ok to unwrap as we've assured above that length is more than one
-    let character = input.chars().nth(0).unwrap();
+    let character = extract_character(&input);
 
     if !character.is_alphabetic() {
-        return Err(());
+        return false;
     }
 
-    Ok(character)
+    true
 }
 
 #[cfg(test)]
 mod test {
-    use game_input::validate_input;
+    use game_input::is_input_valid;
+    use game_input::extract_character;
 
     #[test]
     fn test_valid_input() {
-        let result = validate_input("a\n".to_string());
-
-        assert!(result.is_ok());
-        assert!(result.unwrap() == 'a');
+        assert!(is_input_valid(&"a".to_string()) == true);
     }
 
     #[test]
-    fn test_invalid_input_more_than_one_letter() {
-        let result = validate_input("abc\n".to_string());
-
-        assert!(result.is_err());
+    fn test_invalid_input_more_than_one_character() {
+        assert!(is_input_valid(&"abc".to_string()) == false);
     }
 
     #[test]
     fn test_invalid_input_number() {
-        let result = validate_input("1\n".to_string());
+        assert!(is_input_valid(&"1".to_string()) == false);
+    }
 
-        assert!(result.is_err());
+    #[test]
+    fn test_invalid_input_special_character() {
+        assert!(is_input_valid(&"$".to_string()) == false);
+    }
+
+    #[test]
+    fn test_extract_character_success() {
+        let character = extract_character(&"abc".to_string());
+
+        assert!(character == 'a');
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_extract_character_failure() {
+        extract_character(&"".to_string());
     }
 }
